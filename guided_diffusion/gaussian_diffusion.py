@@ -181,14 +181,20 @@ class GaussianDiffusion:
         device = x_start.device
 
         pbar = tqdm(list(range(self.num_timesteps))[::-1])
+        
         for idx in pbar:
             time = torch.tensor([idx] * img.shape[0], device=device)
             
-            img = img.requires_grad_()
+            img = img.requires_grad_()   
+            print('before self.p_sample')
             out = self.p_sample(x=img, t=time, model=model)
+            print('after self.p_sample')
             
             # Give condition.
             noisy_measurement = self.q_sample(measurement, t=time)
+
+            print('p_sample_loop, ====> img', img.view(-1)[0].item(), 
+                  'x_0_hat', out['pred_xstart'].view(-1)[0].item() )
 
             # TODO: how can we handle argument for different condition method?
             img, distance = measurement_cond_fn(x_t=out['sample'],
@@ -196,18 +202,25 @@ class GaussianDiffusion:
                                       noisy_measurement=noisy_measurement,
                                       x_prev=img,
                                       x_0_hat=out['pred_xstart'])
+            print('p_sample_loop, ====> img', img.view(-1)[0].item(), 
+                  'distance', distance.view(-1)[0].item() )
             img = img.detach_()
+            if idx == 0:
+                print('measurement shape', measurement.shape)
+                print('noise shape', noisy_measurement.shape)
+                print('img shape', img.shape)
            
             pbar.set_postfix({'distance': distance.item()}, refresh=False)
             if record:
                 if idx % 10 == 0:
                     file_path = os.path.join(save_root, f"progress/x_{str(idx).zfill(4)}.png")
                     plt.imsave(file_path, clear_color(img))
-
+            assert(1==2)
         return img       
-        
+    """
     def p_sample(self, model, x, t):
         raise NotImplementedError
+    """
 
     def p_mean_variance(self, model, x, t):
         model_output = model(x, self._scale_timesteps(t))
@@ -372,7 +385,7 @@ class DDPM(SpacedDiffusion):
 
         return {'sample': sample, 'pred_xstart': out['pred_xstart']}
     
-
+"""
 @register_sampler(name='ddim')
 class DDIM(SpacedDiffusion):
     def p_sample(self, model, x, t, eta=0.0):
@@ -404,7 +417,7 @@ class DDIM(SpacedDiffusion):
         coef1 = extract_and_expand(self.sqrt_recip_alphas_cumprod, t, x_t)
         coef2 = extract_and_expand(self.sqrt_recipm1_alphas_cumprod, t, x_t)
         return (coef1 * x_t - pred_xstart) / coef2
-
+"""
 
 # =================
 # Helper functions

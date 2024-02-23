@@ -26,6 +26,9 @@ class ConditioningMethod(ABC):
         return self.operator.project(data=data, measurement=noisy_measurement, **kwargs)
     
     def grad_and_value(self, x_prev, x_0_hat, measurement, **kwargs):
+        """x_prev  --> x_t+1"""
+        """x_0_hat = """
+        """measurement = perturbed image"""
         if self.noiser.__name__ == 'gaussian':
             difference = measurement - self.operator.forward(x_0_hat, **kwargs)
             norm = torch.linalg.norm(difference)
@@ -46,7 +49,8 @@ class ConditioningMethod(ABC):
     @abstractmethod
     def conditioning(self, x_t, measurement, noisy_measurement=None, **kwargs):
         pass
-    
+
+"""  
 @register_conditioning_method(name='vanilla')
 class Identity(ConditioningMethod):
     # just pass the input without conditioning
@@ -74,7 +78,8 @@ class ManifoldConstraintGradient(ConditioningMethod):
         # projection
         x_t = self.project(data=x_t, noisy_measurement=noisy_measurement, **kwargs)
         return x_t, norm
-        
+""" 
+
 @register_conditioning_method(name='ps')
 class PosteriorSampling(ConditioningMethod):
     def __init__(self, operator, noiser, **kwargs):
@@ -84,8 +89,10 @@ class PosteriorSampling(ConditioningMethod):
     def conditioning(self, x_prev, x_t, x_0_hat, measurement, **kwargs):
         norm_grad, norm = self.grad_and_value(x_prev=x_prev, x_0_hat=x_0_hat, measurement=measurement, **kwargs)
         x_t -= norm_grad * self.scale
+        print('PosteriorSampling, ====>x_t' , x_t.view(-1)[0].item(),'norm', norm_grad.view(-1)[0].item())
         return x_t, norm
-        
+
+ 
 @register_conditioning_method(name='ps+')
 class PosteriorSamplingPlus(ConditioningMethod):
     def __init__(self, operator, noiser, **kwargs):

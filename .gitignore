@@ -1,0 +1,6 @@
+## ignore folder
+data/
+models/
+util/__pycache__/
+results/
+guided_diffusion/__pycache__/
